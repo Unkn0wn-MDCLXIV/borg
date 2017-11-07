@@ -365,7 +365,7 @@ class Location:
         |                                                   # or
         """ + optional_archive_re, re.VERBOSE)              # archive name (optional, may be empty)
 
-    win_file_re = re.compile(r'(?:file://)?(?P<path>(?:[a-zA-Z]:[\\/])?(?:[^:]*))' + optional_archive_re, re.VERBOSE)
+    win_file_re = re.compile(r'(?:file://)?(?P<path>([^:]|(:(?!:)))+)' + optional_archive_re, re.VERBOSE)
 
     def __init__(self, text=''):
         self.orig = text
@@ -423,12 +423,6 @@ class Location:
                 self.proto = self._host and 'ssh' or 'file'
                 return True
         else:
-            m = self.win_file_re.match(text)
-            if m:
-                self.proto = 'file'
-                self.path = os.path.normpath(m.group('path').replace('/', '\\'))
-                self.archive = m.group('archive')
-                return True
             m = self.ssh_re.match(text)
             if m:
                 self.proto = m.group('proto')
@@ -438,6 +432,15 @@ class Location:
                 self.path = normpath_special(m.group('path'))
                 self.archive = m.group('archive')
                 return True
+            m = self.win_file_re.match(text)
+            if m:
+                self.proto = 'file'
+                self.path = os.path.normpath(m.group('path').replace('/', '\\'))
+                if len(self.path) > 255 and self.path[0:len('\\\\?\\')] != '\\\\?\\':
+                    self.path = '\\\\?\\' + self.path
+                self.archive = m.group('archive')
+                return True
+
 
         return False
 
