@@ -663,8 +663,8 @@ class Archiver:
             if ':' not in os.path.basename(path):
                 for stream in get_ads(path):
                     if stream != '::$DATA':
-                        self._process(archive, cache, matcher, exclude_caches, exclude_if_present,
-                            keep_tag_files, skip_inodes, path + stream[:-6], restrict_dev,
+                        self._process(fso, cache, matcher, exclude_caches, exclude_if_present,
+                            keep_exclude_tags, skip_inodes, path + stream[:-6], restrict_dev,
                             read_special, dry_run, st)
 
         if not recurse_excluded_dir:
