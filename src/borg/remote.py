@@ -4,11 +4,13 @@ if sys.platform != 'win32':
     import fcntl
 else:
     import shutil
+    import ctypes
 import functools
 import inspect
 import json
 import logging
 import os
+import platform
 import select
 import shlex
 import shutil
@@ -1128,10 +1130,15 @@ class RepositoryCache(RepositoryNoCache):
         self.enospc = 0
 
     def query_size_limit(self):
-        stat_fs = os.statvfs(self.basedir)
-        available_space = stat_fs.f_bsize * stat_fs.f_bavail
-        self.size_limit = int(min(available_space * 0.25, 2**31))
-
+        if platform.system() == 'Windows':
+            free_bytes = ctypes.c_ulonglong(0)
+            ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(self.basedir), None, None, ctypes.pointer(free_bytes))
+            self.size_limit = int(min(free_bytes.value * 0.25, 2**31))
+        else:
+            stat_fs = os.statvfs(self.basedir)
+            available_space = stat_fs.f_bsize * stat_fs.f_bavail
+            self.size_limit = int(min(available_space * 0.25, 2**31))
+        
     def key_filename(self, key):
         return os.path.join(self.basedir, bin_to_hex(key))
 
