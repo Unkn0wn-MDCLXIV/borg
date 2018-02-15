@@ -5,6 +5,7 @@ if sys.platform != 'win32':
 else:
     import shutil
     import ctypes
+    import posixpath
 import functools
 import inspect
 import json
@@ -559,7 +560,7 @@ class RemoteRepository:
         env = prepare_subprocess_env(system=not testing)
         borg_cmd = self.borg_cmd(args, testing)
         if not testing:
-            borg_cmd = self.ssh_cmd(location) + borg_cmd
+            borg_cmd = self.ssh_cmd(location, args.ssh_path) + borg_cmd
         logger.debug('SSH command line: %s', borg_cmd)
         self.p = Popen(borg_cmd, bufsize=0, stdin=PIPE, stdout=PIPE, stderr=PIPE, env=env)
         self.stdin_fd = self.p.stdin.fileno()
@@ -697,17 +698,23 @@ This problem will go away as soon as the server has been upgraded to 1.0.7+.
             remote_path = replace_placeholders(remote_path)
             return env_vars + [remote_path, 'serve'] + opts
 
-    def ssh_cmd(self, location):
+    def ssh_cmd(self, location, ssh_path):
         """return a ssh command line that can be prefixed to a borg command line"""
-        args = shlex.split(os.environ.get('BORG_RSH', 'ssh'))
-        if sys.platform == 'win32' and 'BORG_RSH' not in os.environ:
+        if ssh_path is None:
+            args = shlex.split(os.environ.get('BORG_RSH', 'ssh'))
+        else:
+            args = shlex.split(posixpath.normpath(ssh_path.replace('\\', '/')))
+            if shutil.which(args[0]) is None:
+                args = shlex.split(os.environ.get('BORG_RSH', 'ssh'))
+                ssh_path = None
+        if sys.platform == 'win32' and ssh_path is None and 'BORG_RSH' not in os.environ:
             if shutil.which('ssh') is not None:
                 args = ['ssh']
             elif shutil.which('plink') is not None:
                 args = ['plink', '-ssh', '-batch']
             else:
                 raise NoSSHClient('ssh and plink')
-        if args[0] == 'plink':
+        if 'plink' in args[0].lower():
             if location.port:
                 args += ['-P', str(location.port)]
             if location.user:

@@ -2206,6 +2206,8 @@ class Archiver:
                               help='set umask to M (local and remote, default: %(default)04o)')
             add_common_option('--remote-path', metavar='PATH', dest='remote_path',
                               help='use PATH as borg executable on the remote (default: "borg")')
+            add_common_option('--local-ssh', metavar='PATH', dest='ssh_path',
+                              help='use PATH as local ssh executable (default: "ssh")')
             add_common_option('--remote-ratelimit', metavar='RATE', dest='remote_ratelimit', type=int,
                               help='set remote network upload rate limit in kiByte/s (default: 0=unlimited)')
             add_common_option('--consider-part-files', dest='consider_part_files', action='store_true',
