@@ -600,7 +600,10 @@ class Archiver:
                     with backup_io('scandir'):
                         entries = helpers.scandir_inorder(path)
                     for dirent in entries:
-                        normpath = os.path.normpath(dirent.path)
+                        if sys.platform == 'win32':
+                            normpath = posixpath.normpath(dirent.path.replace('\\', '/'))
+                        else:
+                            normpath = os.path.normpath(dirent.path)
                         self._process(fso, cache, matcher, exclude_caches, exclude_if_present,
                                       keep_exclude_tags, skip_inodes, normpath, restrict_dev,
                                       read_special=read_special, dry_run=dry_run)
