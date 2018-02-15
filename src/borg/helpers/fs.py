@@ -118,7 +118,6 @@ def make_path_safe(path):
     """
     if sys.platform != 'win32':
         return _safe_re.sub('', os.path.splitdrive(path)[1].replace('\\', '/')) or '.'
-        
     else:
         return _safe_re.sub('', path) or '.'
 
