@@ -116,8 +116,11 @@ _safe_re = re.compile(r'^((\.\.)?/+)+')
 def make_path_safe(path):
     """Make path safe by making it relative and local
     """
-    return _safe_re.sub('', path) or '.'
-
+    if sys.platform != 'win32':
+        return _safe_re.sub('', os.path.splitdrive(path)[1].replace('\\', '/')) or '.'
+        
+    else:
+        return _safe_re.sub('', path) or '.'
 
 def hardlinkable(mode):
     """return True if we support hardlinked items of this type"""
